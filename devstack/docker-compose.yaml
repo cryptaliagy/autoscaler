@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+    autoscaler:
+        build:
+            context: ..
+            dockerfile: devstack/Dockerfile
+        image: autoscaler
+        volumes:
+            - "../:/app"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        env_file:
+            - "../.env"
+        ports:
+          - "80:80"

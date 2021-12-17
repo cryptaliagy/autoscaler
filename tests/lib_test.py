@@ -1,12 +1,4 @@
-import pytest
-import autoscaler.lib as lib
+
+import autoscaler as autoscaler
 import sys
 import io
-
-
-@pytest.mark.lib
-def test_main(capsys):
-    lib.main()
-    captured = capsys.readouterr()
-
-    assert captured.out == 'Hello, World!\n'
