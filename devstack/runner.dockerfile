@@ -22,6 +22,8 @@ COPY runner.sh /runner
 
 RUN useradd -m runner
 
+RUN usermod -aG docker runner
+
 RUN chown -R runner /runner
 
 USER runner
