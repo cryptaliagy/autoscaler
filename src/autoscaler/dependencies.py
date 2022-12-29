@@ -37,11 +37,7 @@ def get_settings() -> Settings:  # pragma: no cover
     Returns:
         The default app settings.
     """
-    # Need to initialize this way to prevent pylance from complaining about
-    # the Settings class not being given values for things that get
-    # pulled from the environment.
-    # https://docs.pydantic.dev/visual_studio_code/#basesettings-and-ignoring-pylancepyright-errors
-    return Settings.parse_obj({})
+    return Settings()  # pyright: ignore
 
 
 async def access_log(request: Request) -> None:

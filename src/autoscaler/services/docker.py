@@ -26,6 +26,7 @@ class DockerClient:
     _client: docker.DockerClient
     image: Image
     settings: RunnerSettings
+    is_enabled: bool
 
     def __init__(
         self,
@@ -55,6 +56,12 @@ class DockerClient:
         Args:
             settings: The settings to use for the client.
         """
+        self.is_enabled = settings.docker.enabled
+
+        if not self.is_enabled:
+            logger.debug("Docker client disabled")
+            return
+
         if settings.docker.build_image:
             logger.debug(
                 "Building runner image "

@@ -14,3 +14,4 @@ services:
         environment:
             - PORT=5000
             - DEBUG=1
+            - DOCKER_BUILD_PATH=/app

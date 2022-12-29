@@ -15,11 +15,17 @@ class DockerSettings(BaseSettings):
     """Settings for the docker client."""
 
     build_image: bool = True
-    build_path: str = "/app"
-    runner_dockerfile: str = "/app/devstack/runner.dockerfile"
+    build_path: str = "."
+    runner_dockerfile: str = "./devstack/runner.dockerfile"
     runner_image: str = "runner"
     runner_tag: str = "latest"
     no_cache: bool = False
+    enabled: bool = True
+
+    class Config:  # pyright: ignore
+        """Pydantic config."""
+
+        env_prefix = "DOCKER_"
 
 
 class RunnerSettings(BaseSettings):
@@ -43,6 +49,11 @@ class RunnerSettings(BaseSettings):
     autoscale_timeout: int = 60 * 60 * 23
     base_url: str = "https://github.com"
 
+    class Config:  # pyright: ignore
+        """Pydantic config."""
+
+        env_prefix = "RUNNER_"
+
 
 class Settings(BaseSettings):
     """
@@ -60,9 +71,8 @@ class Settings(BaseSettings):
             requests to the app.
         github_pat: The Github personal access token to use for
             authenticating with the Github API.
-        runner_dockerfile: The path to the Dockerfile to use for
-            the runner image.
-        runner_image_name: The name of the runner image.
+        docker: Settings for the docker client.
+        runner: Settings for the runner.
     """
 
     env: str = "dev"
