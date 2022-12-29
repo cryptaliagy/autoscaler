@@ -1,92 +1,110 @@
-import subprocess
+"""
+A module for the routes of the app.
 
-from typing import (
-    cast
+All routes are defined using FastAPI's APIRouter. The routes are
+then mounted on the app in autoscaler/__init__.py. This is done so
+that they can be defined independently of the app.
+"""
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
 )
 
-from flask import (
-    Blueprint,
-    request,
-    jsonify,
-    current_app,
+from autoscaler.dependencies import (
+    check_hmac,
+)
+from autoscaler.models import (
+    StatusResponse,
+    WorkflowJobWebhookPayload,
+)
+from autoscaler.tasks import (
+    start_runner,
+)
+from autoscaler.services import (
+    docker,
 )
 
-from cryptography.hazmat.primitives import (
-    hashes,
-    hmac,
+
+router = APIRouter()
+
+
+@router.get(
+    "/heartbeat",
+    response_model=StatusResponse,
+    summary="Check the status of the app",
+    description="A route for checking the status of the app.",
 )
+async def heartbeat() -> StatusResponse:
+    """
+    Return a status response to indicate that the service is up and running.
 
-from autoscaler.extras import runner
+    Returns:
+        A status response message
+    """
+    return StatusResponse(msg="Service is up and running")
 
-webhook_route = Blueprint('webhook', __name__, url_prefix='/workflows')
 
+@router.post(
+    "/webhook/repo/docker",
+    summary="Handle a webhook from Github",
+    description="A route for handling webhooks from Github.",
+    response_model=StatusResponse,
+    dependencies=[Depends(check_hmac)],
+)
+async def webhook(
+    payload: WorkflowJobWebhookPayload,
+    tasks: BackgroundTasks,
+) -> StatusResponse:
+    """
+    Handle a webhook from Github.
 
-@webhook_route.route('heartbeat')
-def heartbeat():
-    return jsonify(
-        ok=True,
-        msg='Heartbeat ok!'
+    Args:
+        payload: The payload of the webhook.
+        tasks: A background tasks object.
+
+    Returns:
+        A status response message.
+    """
+    tasks.add_task(
+        start_runner,
+        runner_provider=docker,
+        owner=payload.repository.owner.login,
+        repo=payload.repository.name,
     )
-
-@webhook_route.route('/', methods=['POST'])
-def created_webhook():
-    try:
-        gh_token = request.headers['X-Hub-Signature-256'][7:]
-        gh_token = bytes.fromhex(gh_token)
-    except Exception as e:
-        current_app.logger.error(f'Something went wrong: {e}')
-        return jsonify(ok=False), 400
-
-    # Github uses HMAC-based auth using a pre-provided secret key
-    h = hmac.HMAC(current_app.config['SECRET_TOKEN'].encode(), hashes.SHA256())
-
-    h.update(request.data)
-
-    try:
-        h.verify(gh_token)
-    except Exception as e:
-        current_app.logger.error(f'Failed HMAC authentication: {e}')
-        return jsonify(ok=False), 400
-
-    data = cast(dict, request.get_json())
-
-    action = data['action']
-    repo = data['repository']['name']
-    user = data['repository']['owner']['login']
+    return StatusResponse(msg="Webhook received")
 
 
-    current_app.logger.info(f'A job is currently {action} in {user}/{repo}')
+@router.post(
+    "/webhook/org/docker",
+    summary="Handle an org webhook from Github",
+    description="A route for handling org webhooks from Github.",
+    response_model=StatusResponse,
+    dependencies=[Depends(check_hmac)],
+)
+async def org_webhook(
+    payload: WorkflowJobWebhookPayload,
+    tasks: BackgroundTasks,
+) -> StatusResponse:
+    """
+    Handle an org webhook from Github.
 
-    if action == 'completed':
-        subprocess.call(['docker', 'container', 'prune', '-f'])
-        return jsonify(ok=True), 200
+    Args:
+        payload: The payload of the webhook.
+        tasks: A background tasks object.
 
-    if action != 'queued':
-        return jsonify(ok=True), 200
+    Returns:
+        A status response message.
+    """
+    if payload.organization is None:
+        raise HTTPException(detail="No organization in payload", status_code=400)
 
-    try:
-        token = runner.create_runner_token(user, repo)
-    except ValueError:
-        current_app.logger.error('Could not create new token!')
-        return jsonify(ok=False), 400
-
-    try:
-        subprocess.check_call(
-            [
-                'docker-compose',
-                '-f',
-                'devstack/runner.yaml',
-                'run',
-                '-d',
-                '-e',
-                f'USER={user}',
-                '-e',
-                f'REPO={repo}',
-                '-e',
-                f'TOKEN={token}',
-                'runner',
-            ]
-        )
-        return jsonify(ok=True), 200
-    except:
-        return jsonify(ok=False), 400
+    tasks.add_task(
+        start_runner,
+        runner_provider=docker,
+        owner=payload.organization.login,
+        repo=None,
+    )
+    return StatusResponse(msg="Webhook received")
