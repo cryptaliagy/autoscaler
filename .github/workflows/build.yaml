@@ -21,7 +21,7 @@ jobs:
         run: pip install -e .
 
       - name: Install linter
-        run: pip install black flake8 mypy pydocstyle bandit[toml]
+        run: pip install black flake8-pyproject mypy pydocstyle bandit[toml]
 
       - name: Check code style with black
         run: black --check src
