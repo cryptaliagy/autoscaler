@@ -1,30 +1,18 @@
-FROM python:3.9-slim-buster
+FROM debian:11-slim
 
 WORKDIR /runner
 
-RUN apt-get update
+RUN apt-get update && apt-get install -y curl tar
 
-RUN apt-get install build-essential -y
+RUN curl -fsSL https://get.docker.com | sh
 
-RUN pip install docker-compose
+RUN curl -O -L https://github.com/actions/runner/releases/download/v2.300.2/actions-runner-linux-x64-2.300.2.tar.gz
 
-COPY devstack/get-docker.sh /runner
-
-RUN sh ./get-docker.sh
-
-RUN curl -O -L https://github.com/actions/runner/releases/download/v2.285.1/actions-runner-linux-x64-2.285.1.tar.gz
-
-RUN tar xzf ./actions-runner-linux-x64-2.285.1.tar.gz
-
-RUN ./bin/installdependencies.sh
+RUN tar xzf ./actions-runner-linux-x64-2.*.tar.gz && ./bin/installdependencies.sh
 
 COPY runner.sh /runner
 
-RUN useradd -m runner
-
-RUN usermod -aG docker runner
-
-RUN chown -R runner /runner
+RUN useradd -m runner && usermod -aG docker runner && chown -R runner /runner
 
 USER runner
 

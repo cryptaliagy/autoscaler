@@ -1,17 +1,15 @@
-FROM python:3.9-slim-buster
+FROM python:3.10-alpine as dev
 
 WORKDIR /app
 
-COPY devstack/get-docker.sh /app
+RUN pip install poetry && poetry config virtualenvs.create false
 
-RUN sh ./get-docker.sh
+COPY pyproject.toml poetry.lock /app/
 
-COPY requirements.txt /app
+RUN poetry install --without=dev --no-root
 
-RUN pip install -r requirements.txt
+COPY . .
 
-COPY . /app
+RUN poetry install --without=dev
 
-RUN pip install -e .
-
-CMD ["./run.sh"]
+CMD sh -c "poetry run gunicorn -w 1 --threads 1 -b 0.0.0.0:$PORT -k uvicorn.workers.UvicornWorker 'autoscaler:create_app()' --reload -t 0"
