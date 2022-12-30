@@ -103,3 +103,4 @@ class Settings(BaseSettings):
         """
 
         env_file = ".env"
+        env_prefix = "AUTOSCALER_"
