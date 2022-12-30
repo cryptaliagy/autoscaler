@@ -91,8 +91,10 @@ async def check_hmac(
 
     signature.update(data)
 
+    gh_signature = bytes.fromhex(x_hub_signature_256[7:])
+
     try:
-        signature.verify(x_hub_signature_256[7:].encode())
+        signature.verify(gh_signature)
     except Exception as e:
         logger.error(f"Failed HMAC authentication: {e}")
         raise HTTPException(status_code=400, detail="Invalid HMAC signature provided!")

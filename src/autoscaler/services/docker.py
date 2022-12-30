@@ -57,6 +57,7 @@ class DockerClient:
             settings: The settings to use for the client.
         """
         self.is_enabled = settings.docker.enabled
+        self.settings = settings.runner
 
         if not self.is_enabled:
             logger.debug("Docker client disabled")
@@ -172,16 +173,23 @@ class DockerClient:
         Returns:
             The container that was started.
         """
-        self._client.containers.run(
-            self.image,
-            remove=True,
-            detach=True,
-            environment={
-                "URL": url,
-                "TOKEN": token,
-            },
-            volumes=["/var/run/docker.sock:/var/run/docker.sock"],
+        container = cast(
+            Container,
+            self._client.containers.run(
+                self.image,
+                remove=True,
+                detach=True,
+                environment={
+                    "URL": url,
+                    "TOKEN": token,
+                },
+                volumes=["/var/run/docker.sock:/var/run/docker.sock"],
+            ),
         )
+
+        logger.debug(f"Started runner {container.name}")
+        logger.debug(f"CID: {container.id}")
+        logger.debug(f"Logs: {container.logs()}")
 
     def count_runners(self) -> int:
         """

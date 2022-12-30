@@ -44,4 +44,11 @@ async def start_runner(
 
     token = await github.create_runner_token(owner, repo)
 
-    runner_provider.start_runner(owner=owner, repo=repo, token=token)
+    if repo is None:
+        logger.info(f"Starting runner for org: {owner}")
+        url = f"{runner_provider.settings.base_url}/${owner}"
+    else:
+        logger.info(f"Starting runner for repo: {owner}/{repo}")
+        url = f"{runner_provider.settings.base_url}/${owner}/${repo}"
+
+    runner_provider.start_runner(url=url, token=token)

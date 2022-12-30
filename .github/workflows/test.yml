@@ -7,6 +7,5 @@ jobs:
   test:
     runs-on: [self-hosted]
     name: Test that the autoscaling works
-    container: python:3.10-slim
     steps:
       - run: echo "Hello, World!"
