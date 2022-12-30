@@ -29,6 +29,10 @@ pytest-xdist = "^3.0.2"
 bandit = {extras = ["toml"], version = "^1.7.4"}
 pydocstyle = "^6.1.1"
 
+
+[tool.poetry.group.cli.dependencies]
+typer = "^0.7.0"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
