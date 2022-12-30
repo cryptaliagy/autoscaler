@@ -68,7 +68,7 @@ warn_untyped_fields = true
 
 [tool.bandit]
 exclude_dirs = ['tests']
-targets = ['autoscaler']
+targets = ['src']
 
 [build-system]
 requires = ["poetry-core"]
