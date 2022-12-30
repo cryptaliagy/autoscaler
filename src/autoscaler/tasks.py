@@ -46,9 +46,9 @@ async def start_runner(
 
     if repo is None:
         logger.info(f"Starting runner for org: {owner}")
-        url = f"{runner_provider.settings.base_url}/${owner}"
+        url = f"{runner_provider.settings.base_url}/{owner}"
     else:
         logger.info(f"Starting runner for repo: {owner}/{repo}")
-        url = f"{runner_provider.settings.base_url}/${owner}/${repo}"
+        url = f"{runner_provider.settings.base_url}/{owner}/{repo}"
 
     runner_provider.start_runner(url=url, token=token)

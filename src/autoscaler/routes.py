@@ -18,6 +18,7 @@ from autoscaler.dependencies import (
 )
 from autoscaler.models import (
     StatusResponse,
+    WorkflowJobAction,
     WorkflowJobWebhookPayload,
 )
 from autoscaler.tasks import (
@@ -68,12 +69,13 @@ async def webhook(
     Returns:
         A status response message.
     """
-    tasks.add_task(
-        start_runner,
-        runner_provider=docker,
-        owner=payload.repository.owner.login,
-        repo=payload.repository.name,
-    )
+    if payload.action == WorkflowJobAction.QUEUED:
+        tasks.add_task(
+            start_runner,
+            runner_provider=docker,
+            owner=payload.repository.owner.login,
+            repo=payload.repository.name,
+        )
     return StatusResponse(msg="Webhook received")
 
 
@@ -101,10 +103,11 @@ async def org_webhook(
     if payload.organization is None:
         raise HTTPException(detail="No organization in payload", status_code=400)
 
-    tasks.add_task(
-        start_runner,
-        runner_provider=docker,
-        owner=payload.organization.login,
-        repo=None,
-    )
+    if payload.action == WorkflowJobAction.QUEUED:
+        tasks.add_task(
+            start_runner,
+            runner_provider=docker,
+            owner=payload.organization.login,
+            repo=None,
+        )
     return StatusResponse(msg="Webhook received")
