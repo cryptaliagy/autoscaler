@@ -13,7 +13,7 @@ pydantic = {version = "^1.10.2", extras = ["dotenv"]}
 gunicorn = "^20.1.0"
 loguru = "^0.6.0"
 httpx = "^0.23.1"
-cryptography = "^41.0.0"
+cryptography = "^41.0.2"
 docker = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
