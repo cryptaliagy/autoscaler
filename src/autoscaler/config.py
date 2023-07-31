@@ -6,7 +6,7 @@ can be overridden by setting environment variables with
 the same name as the setting.
 """
 
-from pydantic import (
+from pydantic_settings import (
     BaseSettings,
 )
 
